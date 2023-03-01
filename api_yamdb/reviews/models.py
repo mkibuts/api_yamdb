@@ -1,46 +1,54 @@
 from django.db import models
 
 
-class CommonFields(models.Model):
+class CategoryGenreTitleAbstract(models.Model):
     name = models.CharField(
         verbose_name='Название',
         max_length=256
     )
     slug = models.SlugField(
         verbose_name='Идентификатор',
-        max_length=50,
-        unique=True
+        max_length=256,
+        unique=True,
+        blank=True
     )
 
     def __str__(self):
         return self.name
 
+# ну тут я опять как слепой котенок, что-то делаю, но как будто наощупь
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self.title
+        super().save(*args, **kwargs)
+
     class Meta:
         abstract = True
 
 
-class Category(CommonFields):
+class Category(CategoryGenreTitleAbstract):
 
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
-        ordering = ['name']
 
 
-class Genre(CommonFields):
+class Genre(CategoryGenreTitleAbstract):
 
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
-        ordering = ['name']
 
 
-class Title(CommonFields):
+class Title(models.Model):
 
-    slug = None
-
+    name = models.CharField(
+        verbose_name='Название',
+        max_length=256
+    )
     year = models.IntegerField(
         verbose_name='Дата выхода',
+        blank=True
     )
     description = models.TextField(
         verbose_name='Описание',
@@ -60,10 +68,12 @@ class Title(CommonFields):
         null=True
     )
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
-        ordering = ['name']
 
 
 class GenreTitle(models.Model):
