@@ -8,6 +8,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         lookup_field = 'slug'
+        fields = '__all__'
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -15,16 +16,15 @@ class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         lookup_field = 'slug'
+        fields = '__all__'
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    rating = serializers.IntegerField(read_only=True) #как вычисление повести? average какое-нибудь?
+    rating = serializers.IntegerField(read_only=True)
     genre = serializers.SlugRelatedField(
         slug_field='slug', many=True, queryset=Genre.objects.all()
     )
-    category = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Category.objects.all()
-    )
+    category = CategorySerializer()
 
     class Meta:
         model = Title

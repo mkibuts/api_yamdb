@@ -1,14 +1,14 @@
 from django.db import models
 
 
-class CategoryGenreTitleAbstract(models.Model):
+class CategoryGenreAbstract(models.Model):
     name = models.CharField(
         verbose_name='Название',
         max_length=256
     )
     slug = models.SlugField(
         verbose_name='Идентификатор',
-        max_length=256,
+        max_length=50,
         unique=True,
         blank=True
     )
@@ -16,24 +16,23 @@ class CategoryGenreTitleAbstract(models.Model):
     def __str__(self):
         return self.name
 
-# ну тут я опять как слепой котенок, что-то делаю, но как будто наощупь
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = self.title
+            self.slug = self.title[:50]
         super().save(*args, **kwargs)
 
     class Meta:
         abstract = True
 
 
-class Category(CategoryGenreTitleAbstract):
+class Category(CategoryGenreAbstract):
 
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
 
-class Genre(CategoryGenreTitleAbstract):
+class Genre(CategoryGenreAbstract):
 
     class Meta:
         verbose_name = 'Жанр'
