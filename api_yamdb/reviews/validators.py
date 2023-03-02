@@ -11,6 +11,6 @@ def validate_rating(value):
 def validate_year(year):
     if year > timezone.now().year:
         raise ValidationError(
-            ('%(value)s еще не наступил'),
+            ('%(year)s год еще не наступил'),
             params={'year': year},
         )
