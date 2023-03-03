@@ -1,7 +1,8 @@
 from django.db import models
 
 from users.models import User
-from .validators import validate_rating
+
+from .validators import validate_rating, validate_year
 
 
 class CategoryGenreAbstract(models.Model):
@@ -50,6 +51,7 @@ class Title(models.Model):
     )
     year = models.IntegerField(
         verbose_name='Дата выхода',
+        validators=[validate_year],
         blank=True
     )
     description = models.TextField(
