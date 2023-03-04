@@ -25,43 +25,6 @@ class ReviewCommentAbstract(models.Model):
         return self.text[:30]
 
 
-class Review(ReviewCommentAbstract):
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        verbose_name='Тайтл',
-        related_name='reviews'
-    )
-    score = models.SmallIntegerField(
-        verbose_name='Оценка',
-        validators=[validate_rating],
-        help_text='От 1 до 10'
-    )
-
-    class Meta:
-        verbose_name = 'Отзыв'
-        verbose_name_plural = 'Отзывы'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['author', 'title'],
-                name='one_author_review'
-            )
-        ]
-
-
-class Comment(ReviewCommentAbstract):
-    review = models.ForeignKey(
-        Review,
-        on_delete=models.CASCADE,
-        verbose_name='Отзыв',
-        related_name='comments'
-    )
-
-    class Meta:
-        verbose_name = 'Комментарий'
-        verbose_name_plural = 'Комментарии'
-
-
 class CategoryGenreAbstract(models.Model):
     name = models.CharField(
         verbose_name='Название',
@@ -152,3 +115,40 @@ class GenreTitle(models.Model):
     class Meta:
         verbose_name = 'Произведение и жанр'
         verbose_name_plural = 'Произведения и жанры'
+
+
+class Review(ReviewCommentAbstract):
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        verbose_name='Тайтл',
+        related_name='reviews'
+    )
+    score = models.SmallIntegerField(
+        verbose_name='Оценка',
+        validators=[validate_rating],
+        help_text='От 1 до 10'
+    )
+
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='one_author_review'
+            )
+        ]
+
+
+class Comment(ReviewCommentAbstract):
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        verbose_name='Отзыв',
+        related_name='comments'
+    )
+
+    class Meta:
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'

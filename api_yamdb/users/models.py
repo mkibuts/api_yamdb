@@ -6,6 +6,7 @@ class User(AbstractUser):
     USER = 'user'
     MODERATOR = 'moderator'
     ADMIN = 'admin'
+    CONFIRMATION_CODE = 'confirmation_code'
 
     CHOICES = (
         (USER, 'user'),
