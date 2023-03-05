@@ -11,6 +11,8 @@ from django.core.mail import send_mail
 import random
 from rest_framework.decorators import api_view
 
+from .filters import TitlesFilter
+from .mixins import ListCreateDestroyViewSet
 from reviews.models import Category, Genre, Title, Review, Comment
 from .permissions import IsAdminOrReadOnly, AdminOnly
 from .serializers import (CategorySerializer, TitleSerializer,
@@ -22,7 +24,7 @@ from .serializers import (CategorySerializer, TitleSerializer,
 User = get_user_model()
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(ListCreateDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (IsAdminOrReadOnly,)
@@ -31,7 +33,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     lookup_field = "slug"
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(ListCreateDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsAdminOrReadOnly,)
@@ -47,6 +49,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     serializer_class = TitleSerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = [DjangoFilterBackend]
+    filterset_class = TitlesFilter
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
