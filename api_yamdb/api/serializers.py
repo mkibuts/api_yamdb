@@ -9,7 +9,6 @@ User = get_user_model()
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Category
         lookup_field = 'slug'
@@ -17,7 +16,6 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Genre
         lookup_field = 'slug'
@@ -72,7 +70,6 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True)
 
     class Meta:
         model = User
@@ -83,9 +80,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return str(random.randint(100000, 999999))
 
     def create(self, validated_data):
-
         return User.objects.create_user(
-            **validated_data,
+            email=validated_data.get('email'),
+            username=validated_data.get('username'),
             is_active=False,
             confirmation_code=self.generate_code()
         )
@@ -123,6 +120,7 @@ class VerifyUserSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+
     class Meta:
         fields = (
             'username',
@@ -133,3 +131,12 @@ class UserSerializer(serializers.ModelSerializer):
             'role'
         )
         model = User
+
+    def validate_username(self, username):
+        if (User.objects.filter(username=username).exists()
+                and User.objects.filter(username=username).is_active):
+            raise serializers.ValidationError(
+                'Это имя пользователя уже занято!'
+            )
+        return username
+
