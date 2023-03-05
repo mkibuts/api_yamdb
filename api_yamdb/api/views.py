@@ -10,6 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 # from django.shortcuts import get_object_or_404
 
+from .filters import TitlesFilter
 from .mixins import ListCreateDestroyViewSet
 from reviews.models import Category, Genre, Title, Review, Comment
 from .permissions import IsAdminOrReadOnly, AdminOnly
@@ -47,6 +48,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     serializer_class = TitleSerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = [DjangoFilterBackend]
+    filterset_class = TitlesFilter
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
