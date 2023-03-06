@@ -1,22 +1,14 @@
 from django.db.models import Avg
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets, status
+from rest_framework import filters, viewsets
 from rest_framework.generics import get_object_or_404
-from django.contrib.auth import get_user_model
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .filters import TitlesFilter
 from .mixins import ListCreateDestroyViewSet
 from reviews.models import Category, Genre, Title, Review, Comment
 from .permissions import IsAdminOrReadOnly
-from .serializers import (
-    CategorySerializer,
-    TitleSerializer,
-    GenreSerializer,
-    ReviewSerializer,
-    CommentSerializer,
-)
-
-User = get_user_model()
+from .serializers import (CategorySerializer, TitleSerializer,
+                          GenreSerializer, ReviewSerializer, CommentSerializer)
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):
@@ -24,8 +16,8 @@ class CategoryViewSet(ListCreateDestroyViewSet):
     serializer_class = CategorySerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
-    lookup_field = "slug"
+    search_fields = ('name',)
+    lookup_field = 'slug'
 
 
 class GenreViewSet(ListCreateDestroyViewSet):
@@ -33,14 +25,14 @@ class GenreViewSet(ListCreateDestroyViewSet):
     serializer_class = GenreSerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
-    lookup_field = "slug"
+    search_fields = ('name',)
+    lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().annotate(
         Avg("reviews__score")
-    ).order_by("name")
+    ).order_by('name')
     serializer_class = TitleSerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = [DjangoFilterBackend]

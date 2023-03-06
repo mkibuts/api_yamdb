@@ -1,11 +1,9 @@
 import re
+
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
-from django.contrib.auth import get_user_model
 
 from reviews.models import Category, Genre, Title, Review, Comment
-
-User = get_user_model()
 
 
 class CategorySerializer(serializers.ModelSerializer):
