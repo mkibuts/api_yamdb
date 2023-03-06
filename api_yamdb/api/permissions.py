@@ -11,4 +11,22 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
 class AdminOnly(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'admin'
+        return request.user.role == 'admin'
+
+
+class ModeratorOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.role == 'moderator'
+
+
+class AuthorOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj.author
+
+
+class AnonymousReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.method in permissions.SAFE_METHODS
