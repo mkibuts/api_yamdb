@@ -11,7 +11,7 @@ class User(AbstractUser):
     role = models.CharField(
         verbose_name='Уровень доступа',
         choices=ROLE_CHOICES,
-        max_length=9,
+        max_length=15,
         default='user',
     )
     bio = models.TextField(
@@ -20,7 +20,8 @@ class User(AbstractUser):
     )
     email = models.EmailField(
         verbose_name='email',
-        unique=True
+        unique=True,
+        blank=True
     )
     confirmation_code = models.CharField(
         verbose_name='Код подтверждения',
@@ -44,3 +45,4 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+        ordering = ['-id']
