@@ -24,6 +24,7 @@ class CategoryGenreAbstract(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['-id']
 
     def __str__(self):
         return self.name
@@ -38,12 +39,14 @@ class Category(CategoryGenreAbstract):
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
+        ordering = ['-id']
 
 
 class Genre(CategoryGenreAbstract):
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
+        ordering = ['-id']
 
 
 class Title(models.Model):
@@ -80,6 +83,7 @@ class Title(models.Model):
     class Meta:
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
+        ordering = ['-id']
 
 
 class GenreTitle(models.Model):
@@ -98,6 +102,7 @@ class GenreTitle(models.Model):
     class Meta:
         verbose_name = 'Произведение и жанр'
         verbose_name_plural = 'Произведения и жанры'
+        ordering = ['-id']
 
 
 class ReviewCommentAbstract(models.Model):
@@ -116,6 +121,7 @@ class ReviewCommentAbstract(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['-id']
 
     def __str__(self):
         return self.text[:30]
@@ -143,6 +149,7 @@ class Review(ReviewCommentAbstract):
                 name='one_author_review'
             )
         ]
+        ordering = ['-id']
 
 
 class Comment(ReviewCommentAbstract):
@@ -156,3 +163,4 @@ class Comment(ReviewCommentAbstract):
     class Meta:
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
+        ordering = ['-id']
