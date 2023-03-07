@@ -33,6 +33,13 @@ class User(AbstractUser):
         blank=True,
         null=True
     )
+    username = models.CharField(
+        verbose_name='Имя пользователя',
+        max_length=150,
+        unique=True,
+        blank=False,
+        null=False
+    )
 
     class Meta:
         verbose_name = 'Пользователь'
