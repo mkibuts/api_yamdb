@@ -1,16 +1,18 @@
 import random
 
 from django.core.mail import send_mail
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, filters
 from rest_framework.generics import get_object_or_404
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import (RegistrationSerializer, VerifyUserSerializer,
-                          UserSerializer)
 from .models import User
+from .permissions import AdminOnly
+from .serializers import (RegistrationSerializer, VerifyUserSerializer,
+                          UserSerializer, UserMeSerializer)
 
 
 class RegistrationAPIView(APIView):
@@ -76,21 +78,35 @@ class UserActivateAPIView(APIView):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.IsAdminUser,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = (AdminOnly,)
+    lookup_field = 'username'
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('$name',)
+
+    def update(self, request, *args, **kwargs):
+        if self.request.method == 'PUT':
+            raise MethodNotAllowed('PUT')
+        return super().update(request, *args, **kwargs)
 
 
-@api_view(['GET', 'PATCH'])
-def user_me(request):
-    if request.method == 'PATCH':
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
+class UserMeAPIView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        user = self.request.user
+        serializer = UserMeSerializer(user)
+        return Response(serializer.data)
+
+    def patch(self, request):
+        user = self.request.user
+        serializer = UserMeSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-    me = get_object_or_404(User, username=request.data.get('username'))
-    serializer = UserSerializer(me, many=False)
-    return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 @api_view(['GET', 'PATCH', 'DELETE'])

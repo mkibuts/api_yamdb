@@ -1,50 +1,52 @@
 from django.db import models
 
 from users.models import User
-
 from .validators import validate_rating, validate_year
+from .utils import slugify
 
 
 class CategoryGenreAbstract(models.Model):
-    name = models.CharField(
-        verbose_name='Название',
-        max_length=256
-    )
+    """
+    Абстрактная модель, включающая поля slug и title, а также
+    переопределенный метод save(), генерирующий slug при его отсутствии.
+    """
     slug = models.SlugField(
-        verbose_name='Идентификатор',
-        max_length=50,
+        verbose_name='Slug',
         unique=True,
-        blank=True
+        max_length=50,
+        blank=True,
+        help_text='Если оставить пустым, то заполнится автоматически.'
     )
+    name = models.CharField(
+        verbose_name='Наименование',
+        max_length=256,
+    )
+
+    class Meta:
+        abstract = True
 
     def __str__(self):
         return self.name
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = self.title[:50]
+            self.slug = slugify(self.name[:50])
         super().save(*args, **kwargs)
-
-    class Meta:
-        abstract = True
 
 
 class Category(CategoryGenreAbstract):
-
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
 
 class Genre(CategoryGenreAbstract):
-
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
 
 class Title(models.Model):
-
     name = models.CharField(
         verbose_name='Название',
         max_length=256
