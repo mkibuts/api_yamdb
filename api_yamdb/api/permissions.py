@@ -5,18 +5,20 @@ class IsAdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         return (request.method in permissions.SAFE_METHODS
                 or (request.user.is_authenticated and (
-                    request.user.role == 'admin'
-                    or request.user.is_superuser)))
+                        request.user.role == 'admin'
+                        or request.user.is_superuser)))
 
 
 class AdminOnly(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.role == 'admin'
+        return (request.user.is_authenticated and (request.user.role == 'admin'
+                or request.user.is_staff))
 
 
 class ModeratorOnly(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.role == 'moderator'
+        return (request.user.is_authenticated
+                and request.user.role == 'moderator')
 
 
 class AuthorOnly(permissions.BasePermission):
@@ -30,3 +32,9 @@ class AuthorOnly(permissions.BasePermission):
 class AnonymousReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.method in permissions.SAFE_METHODS
+
+
+class AuthenticationReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (request.method in permissions.SAFE_METHODS
+                and request.user.is_authenticated)

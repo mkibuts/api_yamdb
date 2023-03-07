@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (CategoryViewSet, GenreViewSet, TitleViewSet,
                     ReviewViewSet, CommentViewSet, RegistrationAPIView,
-                    UserActivateAPIView, UserViewSet, user_me, user_username)
+                    UserActivateAPIView, UserViewSet,
+                    user_username, user_me)
 from .permissions import AdminOnly
 
 router = DefaultRouter()

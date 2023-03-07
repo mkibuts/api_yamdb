@@ -1,31 +1,46 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
-    USER = 'user'
-    MODERATOR = 'moderator'
-    ADMIN = 'admin'
-    CONFIRMATION_CODE = 'confirmation_code'
-
-    CHOICES = (
-        (USER, 'user'),
-        (MODERATOR, 'moderator'),
-        (ADMIN, 'admin'),
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('moderator', 'Moderator'),
+        ('user', 'User')
+    ]
+    role = models.CharField(
+        verbose_name='Уровень доступа',
+        choices=ROLE_CHOICES,
+        max_length=9,
+        default='user',
+    )
+    bio = models.TextField(
+        verbose_name='Биография',
+        blank=True,
+    )
+    email = models.EmailField(
+        verbose_name='email',
+        unique=True
+    )
+    confirmation_code = models.CharField(
+        verbose_name='Код подтверждения',
+        max_length=32,
+        null=True
+    )
+    password = models.CharField(
+        verbose_name='Пароль',
+        max_length=128,
+        blank=True,
+        null=True
     )
     username = models.CharField(
-        'Имя пользователя',
+        verbose_name='Имя пользователя',
+        max_length=150,
         unique=True,
         blank=False,
-        max_length=150
+        null=False
     )
-    email = models.EmailField('email', unique=True)
-    bio = models.TextField('Биография', blank=True)
-    role = models.CharField(
-        'Роль',
-        max_length=255,
-        choices=CHOICES,
-        default=USER
-    )
-    confirmation_code = models.CharField(max_length=200, blank=True)
-    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'

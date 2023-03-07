@@ -9,17 +9,30 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 import random
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 
 from .filters import TitlesFilter
 from .mixins import ListCreateDestroyViewSet
 from reviews.models import Category, Genre, Title, Review, Comment
-from .permissions import IsAdminOrReadOnly, AdminOnly
-from .serializers import (CategorySerializer, TitleSerializer,
-                          GenreSerializer, ReviewSerializer, CommentSerializer,
-                          RegistrationSerializer, VerifyUserSerializer,
-                          UserSerializer)
-
+from .permissions import (
+    IsAdminOrReadOnly,
+    AdminOnly,
+    ModeratorOnly,
+    AuthorOnly,
+    AnonymousReadOnly,
+    AuthenticationReadOnly
+)
+from .serializers import (
+    CategorySerializer,
+    TitleSerializer,
+    GenreSerializer,
+    ReviewSerializer,
+    CommentSerializer,
+    RegistrationSerializer,
+    VerifyUserSerializer,
+    UserSerializer,
+    # UserPATCHSerializer
+)
 
 User = get_user_model()
 
@@ -118,7 +131,7 @@ class RegistrationAPIView(APIView):
 
         return Response(
             {'username': username, 'email': email},
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_200_OK
         )
 
 
@@ -127,7 +140,7 @@ class UserActivateAPIView(APIView):
     serializer_class = VerifyUserSerializer
 
     def post(self, request):
-        serializer = VerifyUserSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
             username = serializer.data.get('username')
             user = get_object_or_404(User, username=username)
@@ -144,26 +157,36 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (AdminOnly,)
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username', )
 
 
 @api_view(['GET', 'PATCH'])
+@permission_classes([AuthenticationReadOnly | AuthorOnly | AdminOnly])
 def user_me(request):
     if request.method == 'PATCH':
-        serializer = UserSerializer(data=request.data)
+        serializer = UserSerializer(data=request.data, partial=True)
+        # if not serializer.initial_data.get('username'):
+        #     username = request.user.username
+        # if not serializer.initial_data.get('email'):
+        #     email = request.user.email
         if serializer.is_valid(raise_exception=True):
+
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-    me = get_object_or_404(User, username=request.data.get('username'))
+        return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+    me = get_object_or_404(User, username=request.user)
     serializer = UserSerializer(me, many=False)
     return Response(serializer.data)
 
 
 @api_view(['GET', 'PATCH', 'DELETE'])
+@permission_classes([AdminOnly])
 def user_username(request, username):
     user = get_object_or_404(User, username=username)
     if request.method == 'GET':
         serializer = UserSerializer(user, many=False)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     serializer = UserSerializer(data=request.data)
     if request.method == 'PATCH':
         if serializer.is_valid(raise_exception=True):
@@ -172,3 +195,20 @@ def user_username(request, username):
     user.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+# class UserMeAPIView(APIView):
+#     # permission_classes = (AuthenticationReadOnly, AuthorOnly, AdminOnly)
+#     permission_classes = (AuthorOnly, )
+#     serializer_class = UserSerializer
+#
+#     def get(self, request):
+#         me = get_object_or_404(User, username=request.user)
+#         serializer = UserSerializer(me, many=False)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+#
+#     def patch(self, request):
+#         serializer = UserSerializer(data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
