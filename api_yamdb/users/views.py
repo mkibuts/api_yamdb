@@ -36,8 +36,8 @@ class RegistrationAPIView(APIView):
             user.save()
             email = user.email
         else:
-            if (User.objects.filter(username=username).exists() or
-                    User.objects.filter(email=email).exists()):
+            if (User.objects.filter(username=username).exists()
+                    or User.objects.filter(email=email).exists()):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             serializer.is_valid(raise_exception=True)
             serializer.save()
