@@ -1,55 +1,47 @@
-from django.db.models import Avg
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, permissions, mixins, filters
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets, status
-from rest_framework.generics import get_object_or_404
-from rest_framework.response import Response
-from django.contrib.auth import get_user_model
-from rest_framework.permissions import AllowAny
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.core.mail import send_mail
-import random
-from rest_framework.decorators import api_view
 
-from .filters import TitlesFilter
-from .mixins import ListCreateDestroyViewSet
 from reviews.models import Category, Genre, Title, Review, Comment
-from .permissions import IsAdminOrReadOnly, AdminOnly
-from .serializers import (CategorySerializer, TitleSerializer,
-                          GenreSerializer, ReviewSerializer, CommentSerializer,
-                          RegistrationSerializer, VerifyUserSerializer,
-                          UserSerializer)
-
-
-User = get_user_model()
+from .permissions import AdminOrReadOnly
+from .filters import TitleFilter
+from .mixins import ListCreateDestroyViewSet
+from .serializers import (ReviewSerializer, CommentSerializer,
+                          TitleReadSerializer, TitleCreateSerializer,
+                          GenreSerializer, CategorySerializer)
 
 
 class CategoryViewSet(ListCreateDestroyViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          AdminOrReadOnly,)
+    lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
-    lookup_field = "slug"
+    search_fields = ('$name',)
 
 
 class GenreViewSet(ListCreateDestroyViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          AdminOrReadOnly,)
+    lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
-    lookup_field = "slug"
+    search_fields = ('$name',)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().annotate(
-        Avg("reviews__score")
-    ).order_by("name")
-    serializer_class = TitleSerializer
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = TitlesFilter
+    queryset = Title.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          AdminOrReadOnly,)
+
+    def get_serializer_class(self):
+        if self.request.method in ('POST', 'PUT', 'PATCH'):
+            return TitleCreateSerializer
+        return TitleReadSerializer
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -76,99 +68,3 @@ class CommentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
         return Comment.objects.filter(review=review)
-
-
-class RegistrationAPIView(APIView):
-    permission_classes = (AllowAny,)
-    serializer_class = RegistrationSerializer
-
-    def generate_code(self):
-        random.seed()
-        return str(random.randint(100000, 999999))
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        email = serializer.initial_data.get('email')
-        username = serializer.initial_data.get('username')
-        if User.objects.filter(username=username, email=email).exists():
-            user = get_object_or_404(User, username=username)
-            confirmation_code = self.generate_code()
-            user.confirmation_code = confirmation_code
-            user.save()
-            email = user.email
-        else:
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            confirmation_code = get_object_or_404(
-                User,
-                username=serializer.data.get('username')
-            ).confirmation_code
-            email = serializer.data.get('email')
-
-        subject = 'YaMDB'
-        message = 'Ваш очень секретный код - ' + confirmation_code
-
-        send_mail(
-            subject,
-            message,
-            'from@yamdb.ru',
-            [email, ],
-            fail_silently=False,
-        )
-
-        return Response(
-            {'username': username, 'email': email},
-            status=status.HTTP_201_CREATED
-        )
-
-
-class UserActivateAPIView(APIView):
-    permission_classes = (AllowAny,)
-    serializer_class = VerifyUserSerializer
-
-    def post(self, request):
-        serializer = VerifyUserSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            username = serializer.data.get('username')
-            user = get_object_or_404(User, username=username)
-            user.is_active = True
-            user.save()
-            refresh = RefreshToken.for_user(user)
-            token = str(refresh.access_token)
-        return Response({
-            'token': token
-        }, status=status.HTTP_201_CREATED)
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    permission_classes = (AdminOnly,)
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
-@api_view(['GET', 'PATCH'])
-def user_me(request):
-    if request.method == 'PATCH':
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-    me = get_object_or_404(User, username=request.data.get('username'))
-    serializer = UserSerializer(me, many=False)
-    return Response(serializer.data)
-
-
-@api_view(['GET', 'PATCH', 'DELETE'])
-def user_username(request, username):
-    user = get_object_or_404(User, username=username)
-    if request.method == 'GET':
-        serializer = UserSerializer(user, many=False)
-        return Response(serializer.data)
-    serializer = UserSerializer(data=request.data)
-    if request.method == 'PATCH':
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-    user.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
-
