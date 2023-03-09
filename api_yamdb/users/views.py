@@ -13,6 +13,7 @@ from .permissions import AdminOnly, AuthorOnly
 from .serializers import (RegistrationSerializer, VerifyUserSerializer,
                           UserSerializer, UserPATCHSerializer,
                           UserMeSerializer)
+from django.conf import settings
 
 User = get_user_model()
 
@@ -35,7 +36,7 @@ class RegistrationAPIView(APIView):
         send_mail(
             subject,
             message,
-            'from@yamdb.ru',
+            settings.DEFAULT_FROM_EMAIL,
             [user.email, ],
             fail_silently=False,
         )
