@@ -6,8 +6,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
-import random
 from rest_framework.decorators import api_view, permission_classes
+from django.contrib.auth.tokens import default_token_generator
 
 from .permissions import AdminOnly, AuthorOnly
 from .serializers import (RegistrationSerializer, VerifyUserSerializer,
@@ -21,31 +21,13 @@ class RegistrationAPIView(APIView):
     permission_classes = (AllowAny,)
     serializer_class = RegistrationSerializer
 
-    def generate_code(self):
-        random.seed()
-        return str(random.randint(100000, 999999))
-
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        email = serializer.initial_data.get('email')
-        username = serializer.initial_data.get('username')
-        if User.objects.filter(username=username, email=email).exists():
-            user = get_object_or_404(User, username=username)
-            confirmation_code = self.generate_code()
-            user.confirmation_code = confirmation_code
-            user.save()
-            email = user.email
-        else:
-            if (User.objects.filter(username=username).exists()
-                    or User.objects.filter(email=email).exists()):
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            confirmation_code = get_object_or_404(
-                User,
-                username=serializer.data.get('username')
-            ).confirmation_code
-            email = serializer.data.get('email')
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        user = get_object_or_404(User, username=request.data.get('username'))
+        confirmation_code = default_token_generator.make_token(user)
 
         subject = 'YaMDB'
         message = 'Ваш очень секретный код - ' + confirmation_code
@@ -54,12 +36,12 @@ class RegistrationAPIView(APIView):
             subject,
             message,
             'from@yamdb.ru',
-            [email, ],
+            [user.email, ],
             fail_silently=False,
         )
 
         return Response(
-            {'username': username, 'email': email},
+            {'username': user.username, 'email': user.email},
             status=status.HTTP_200_OK
         )
 

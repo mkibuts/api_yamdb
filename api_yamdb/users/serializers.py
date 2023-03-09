@@ -2,14 +2,14 @@ import re
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 from django.contrib.auth import get_user_model
-import random
+from django.contrib.auth.tokens import default_token_generator
 
 from .models import User
 
 User = get_user_model()
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
+class RegistrationSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=254, required=True)
     username = serializers.CharField(max_length=150, required=True)
 
@@ -17,23 +17,26 @@ class RegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ['email', 'username']
 
-    def generate_code(self):
-        random.seed()
-        return str(random.randint(100000, 999999))
-
     def create(self, validated_data):
+
         email = validated_data.get('email')
         username = validated_data.get('username')
         if User.objects.filter(email=email, username=username).exists():
-            raise serializers.ValidationError('Не ваша почта или ник!')
+            return User.objects.filter(email=email, username=username)
+        else:
+            if (User.objects.filter(username=username).exists()
+                    or User.objects.filter(email=email).exists()):
+                raise serializers.ValidationError(
+                    {'username': ['Не ваша почта или ник!']}
+                )
         return User.objects.create_user(
             email=email,
             username=username,
             is_active=False,
-            confirmation_code=self.generate_code()
         )
 
     def validate_username(self, username):
+
         if username == 'me':
             raise serializers.ValidationError('Недопустимый username!')
         if not re.match(r'^[\w.@+-]+\Z', username):
@@ -41,10 +44,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 'Недопустимые символы')
         return username
 
-    def validate_email(self, email):
-        if User.objects.filter(email=email).exists():
-            raise serializers.ValidationError('Эта почта уже занята!')
-        return email
+    # def validate_email(self, email):
+    #     if User.objects.filter(email=email).exists():
+    #         raise serializers.ValidationError('Эта почта уже занята!')
+    #     return email
 
 
 class VerifyUserSerializer(serializers.Serializer):
@@ -53,23 +56,18 @@ class VerifyUserSerializer(serializers.Serializer):
 
     def validate_username(self, username):
         if username is None:
-            raise serializers.ValidationError('Обязательное поле!')
-        if not User.objects.filter(username=username).exists():
-            raise serializers.ValidationError('Такого пользователя не '
-                                              'существует!')
+            raise serializers.ValidationError('Обязательное поле')
         if not re.match(r'^[\w.@+-]+\Z', username):
-            raise serializers.ValidationError(
-                'Недопустимые символы')
+            raise serializers.ValidationError('Недопустимые символы')
         return username
 
     def validate_confirmation_code(self, code):
-        user = self.initial_data.get('username')
-        if user is None:
-            raise serializers.ValidationError('Пользователь не найден')
-        access_code = get_object_or_404(User, username=user).confirmation_code
-        if access_code != code:
-            raise serializers.ValidationError(
-                'Некорректный код подтверждения!')
+        username = self.initial_data.get('username')
+        if username is None:
+            raise serializers.ValidationError('Нельзя оставлять пустым')
+        user = get_object_or_404(User, username=username)
+        if not default_token_generator.check_token(user, code):
+            raise serializers.ValidationError('Некорректный код')
         return code
 
 
