@@ -1,14 +1,11 @@
+import re
 from datetime import datetime as d
-
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 from rest_framework.relations import SlugRelatedField
-import re
 from django.contrib.auth.tokens import default_token_generator
 
 from users.models import User
-
-
 from reviews.models import Category, Genre, Title, Review, Comment
 
 
@@ -222,3 +219,10 @@ class UserMeSerializer(UserSerializer):
         if role not in roles:
             raise serializers.ValidationError('Недопустимая роль!')
         return role
+
+    def validate_username(self, username):
+        try:
+            get_object_or_404(User, username=username)
+        except Exception:
+            raise serializers.ValidationError('Пользователя не существует')
+        return username
