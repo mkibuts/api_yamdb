@@ -21,8 +21,7 @@ from .serializers import (ReviewSerializer, CommentSerializer,
                           GenreSerializer, CategorySerializer,
                           RegistrationSerializer, VerifyUserSerializer,
                           UserSerializer, UserPATCHSerializer,
-                          UserMeSerializer
-                          )
+                          UserMeSerializer)
 
 
 User = get_user_model()
@@ -64,8 +63,9 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAuthorOrStaffOrReadOnly)
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -77,8 +77,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAuthorOrStaffOrReadOnly)
 
     def perform_create(self, serializer):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
