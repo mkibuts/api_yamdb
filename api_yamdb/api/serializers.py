@@ -213,7 +213,7 @@ class UserMeSerializer(UserSerializer):
     def validate_role(self, role):
         username = self.instance.username
         user = get_object_or_404(User, username=username)
-        if get_object_or_404(User, username=user).role != 'admin':
+        if not get_object_or_404(User, username=user).is_admin:
             raise serializers.ValidationError('Вам нельзя себе поменять роль!')
         roles = self.fields.fields.get('role').choices
         if role not in roles:
