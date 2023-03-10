@@ -13,7 +13,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 
 from reviews.models import Category, Genre, Title, Review, Comment
-from .permissions import AdminOrReadOnly, AdminOnly, AuthorOnly
+from .permissions import AdminOrReadOnly, AdminOnly, IsAuthorOrStaffOrReadOnly
 from .filters import TitleFilter
 from .mixins import ListCreateDestroyViewSet
 from .serializers import (ReviewSerializer, CommentSerializer,
@@ -21,8 +21,7 @@ from .serializers import (ReviewSerializer, CommentSerializer,
                           GenreSerializer, CategorySerializer,
                           RegistrationSerializer, VerifyUserSerializer,
                           UserSerializer, UserPATCHSerializer,
-                          UserMeSerializer
-                          )
+                          UserMeSerializer)
 
 
 User = get_user_model()
@@ -64,8 +63,9 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAuthorOrStaffOrReadOnly)
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -77,8 +77,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,
+                          IsAuthorOrStaffOrReadOnly)
 
     def perform_create(self, serializer):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
@@ -145,7 +146,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET', 'PATCH'])
-@permission_classes([AuthorOnly | AdminOnly])
+@permission_classes([IsAuthorOrStaffOrReadOnly])
 def user_me(request):
     if request.method == 'PATCH':
         serializer = UserMeSerializer(request.user, data=request.data,
@@ -154,6 +155,8 @@ def user_me(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+    if not request.user.is_authenticated:
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
     me = get_object_or_404(User, username=request.user)
     serializer = UserSerializer(me, many=False)
     return Response(serializer.data)
