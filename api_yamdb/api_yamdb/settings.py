@@ -97,6 +97,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+DEFAULT_FROM_EMAIL = 'Tech Support <YaMDB@support.ru>'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (

@@ -3,16 +3,20 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
+    ADMIN = 'admin'
+    MODERATOR = 'moderator'
+    USER = 'user'
+
     ROLE_CHOICES = [
-        ('admin', 'Admin'),
-        ('moderator', 'Moderator'),
-        ('user', 'User')
+        (ADMIN, 'Admin'),
+        (MODERATOR, 'Moderator'),
+        (USER, 'User')
     ]
     role = models.CharField(
         verbose_name='Уровень доступа',
         choices=ROLE_CHOICES,
         max_length=15,
-        default='user',
+        default=USER,
     )
     bio = models.TextField(
         verbose_name='Биография',
@@ -46,3 +50,11 @@ class User(AbstractUser):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = ['-id']
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
+
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
