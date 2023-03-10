@@ -77,13 +77,13 @@ class Title(models.Model):
         null=True
     )
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name = 'Произведение'
         verbose_name_plural = 'Произведения'
         ordering = ['-id']
+
+    def __str__(self):
+        return self.name
 
 
 class GenreTitle(models.Model):
@@ -96,13 +96,13 @@ class GenreTitle(models.Model):
         verbose_name='Жанр',
         on_delete=models.CASCADE)
 
-    def __str__(self):
-        return f'Произведение "{self.title}", жанр: {self.genre}'
-
     class Meta:
         verbose_name = 'Произведение и жанр'
         verbose_name_plural = 'Произведения и жанры'
         ordering = ['-id']
+
+    def __str__(self):
+        return f'Произведение "{self.title}", жанр: {self.genre}'
 
 
 class ReviewCommentAbstract(models.Model):

@@ -6,7 +6,6 @@ class IsAuthorOrStaffOrReadOnly(permissions.BasePermission):
     Допускает к редактированию автора контента или модераторам и выше.
     """
     def has_object_permission(self, request, view, obj):
-        staff = ('admin', 'moderator')
         return (request.method in permissions.SAFE_METHODS
                 or obj.author == request.user
                 or request.user.is_admin

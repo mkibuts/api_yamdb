@@ -1,20 +1,15 @@
 from datetime import datetime as d
 
-from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 from rest_framework.relations import SlugRelatedField
 import re
-from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 
 from users.models import User
 
 
 from reviews.models import Category, Genre, Title, Review, Comment
-
-
-User = get_user_model()
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -32,7 +27,9 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField(
+        source='reviews__score__avg', read_only=True
+    )
     genre = GenreSerializer(read_only=True, many=True)
     category = CategorySerializer(read_only=True)
 
@@ -41,9 +38,6 @@ class TitleReadSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
         )
-
-    def get_rating(self, obj):
-        return obj.reviews.aggregate(Avg('score')).get('score__avg')
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
