@@ -1,14 +1,12 @@
 from datetime import datetime as d
+import re
 
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 from rest_framework.relations import SlugRelatedField
-import re
 from django.contrib.auth.tokens import default_token_generator
 
 from users.models import User
-
-
 from reviews.models import Category, Genre, Title, Review, Comment
 
 
